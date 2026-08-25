@@ -2,8 +2,9 @@
 
 //includes sd_card set up files and functions
 #include "sd_card.h"
+//includes button and input control code
+#include "controls.h"
 
-#include <SD_MMC.h>
 
 void setup() {
   Serial.begin(115200);
@@ -12,10 +13,13 @@ void setup() {
   {
     return;
   }
-  SD_MMC.open("/");
+  controlsSetup();
 }
 
 void loop() {
-  
+  if (encoderValueChanged())
+  {
+    Serial.println(getEncoderValue());
+  }
 }
 

@@ -1,11 +1,13 @@
 //including SDMMC library to use SD card
 #include <SD_MMC.h>
 #include <Arduino.h>
+#include "sd_card.h"
 
 //defines the necessary pins for the built-in sd card reader
 const int SD_MMC_CMD = 15; 
 const int SD_MMC_CLK = 14;
 const int SD_MMC_D0 = 2;
+
 
 bool sd_card_setup()
 {
@@ -46,4 +48,9 @@ uint64_t get_free_bytes()
 void eject_sd()
 {
     SD_MMC.end();
+}
+
+bool sd_card_list_directory(const char *path)
+{
+    File dir = SD_MMC.open(path);
 }
