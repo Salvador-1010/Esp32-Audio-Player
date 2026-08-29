@@ -5,8 +5,10 @@
 //includes button and input control code
 #include "controls.h"
 //includes power sequencing function files
+#include "power.h"
 
 void setup() {
+  powerSetup();
   Serial.begin(115200);
 
   // if(!sd_card_setup())
@@ -17,6 +19,7 @@ void setup() {
 }
 
 void loop() {
+  powerUpdate();
   // if (encoderValueChanged())
   // {
   //   Serial.println(getEncoderValue());

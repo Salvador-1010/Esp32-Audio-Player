@@ -2,9 +2,12 @@
 
 #pragma once
 
+//functions to control the on/off status of the entire device
 void powerSetup();
 void powerUpdate();
 void powerOff();
 
+//function to read the current battery voltage
+float getBatteryVoltage();
 
 
