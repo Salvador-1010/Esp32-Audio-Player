@@ -24,5 +24,6 @@ void loop() {
   // {
   //   Serial.println(getEncoderValue());
   // }
+  Serial.println(getBatteryVoltage());
 }
 
