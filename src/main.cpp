@@ -6,6 +6,8 @@
 #include "controls.h"
 //includes power sequencing function files
 #include "power.h"
+//incudes tft and ui files
+#include "displayUI.h"
 
 void setup() {
   //immedialty calls the power set up function to ensure the device keeps itself on (activites NPN transistor and PMOS)
@@ -19,13 +21,20 @@ void setup() {
   sd_card_setup();
   
   test("/music");
+  displaySetup();
+  updateDisplay();
 }
 
 void loop() {
   powerUpdate();
-  // if (encoderValueChanged())
-  // {
-  //   Serial.println(getEncoderValue());
-  // }
+  if (encoderValueChanged())
+  {
+    Serial.println(getEncoderValue());
+  }
+  drawDisplayMenu();
 }
 
+// void updateDisplay()
+// {
+
+// }

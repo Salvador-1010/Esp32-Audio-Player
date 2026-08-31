@@ -63,3 +63,8 @@ void test(const char *path)
       entry = file.openNextFile();
     }
 }
+
+String getDirectoryName()
+{
+  return "";
+}
