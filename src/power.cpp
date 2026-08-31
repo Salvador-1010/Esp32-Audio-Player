@@ -28,8 +28,8 @@ void powerSetup() {
     //gives the esp32 gpio adc pin the capabilitiy of reading voltages up to 2.1V accurately
     //(by default can only read up to 1.1V)
     analogSetPinAttenuation(batteryVoltageInput, ADC_11db);
-    Serial.print("Power has been set up, Time: ");
-    Serial.println(millis());
+    // Serial.print("Power has been set up, Time: ");
+    // Serial.println(millis());
 }
 
 void powerUpdate() {
@@ -41,20 +41,20 @@ void powerUpdate() {
         powerOffArmed = true;
         //sets the timing tracker back to false since the button is no longer being held down
         isTiming = false;
-        Serial.print("Button let go, Time: ");
-        Serial.println(millis());
+        // Serial.print("Button let go, Time: ");
+        // Serial.println(millis());
     }
 
     //when the button is pressed down 
     if (buttonState == LOW)
     {
-        Serial.print("Button Pressed, Time: ");
-        Serial.println(millis());
+        // Serial.print("Button Pressed, Time: ");
+        // Serial.println(millis());
         if (!isTiming)
         {
             timeButtonHeld = millis();
-            Serial.print("time elasped started, Time: ");
-            Serial.println(millis());
+            // Serial.print("time elasped started, Time: ");
+            // Serial.println(millis());
         }
         //sets the timing tracker to true when the button is pressed for the first time
         isTiming = true;
@@ -62,16 +62,16 @@ void powerUpdate() {
         //checks whether the button has been held longer than 2 seconds and the power off sequence hasnt already been started
         if ((millis() - timeButtonHeld >= 2000) && powerOffArmed && !poweringOff)
         {
-            Serial.print("Power off function called, Time: ");
-            Serial.println(millis());
+            // Serial.print("Power off function called, Time: ");
+            // Serial.println(millis());
             powerOff();
         }
     }
 }
 
 void powerOff() {
-    Serial.print("Power off function ran, Time: ");
-    Serial.println(millis());
+    // Serial.print("Power off function ran, Time: ");
+    // Serial.println(millis());
     //sets poweringoff sequence to true
     poweringOff = true;
 

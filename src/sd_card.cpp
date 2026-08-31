@@ -50,7 +50,16 @@ void eject_sd()
     SD_MMC.end();
 }
 
-bool sd_card_list_directory(const char *path)
+void test(const char *path)
 {
-    File dir = SD_MMC.open(path);
+  //tries to open the requested file path
+    File file = SD_MMC.open(path);
+    Serial.println(file.name());
+    File entry = file.openNextFile();
+    while(entry)
+    {
+      Serial.println(entry.name());
+      entry.close();
+      entry = file.openNextFile();
+    }
 }

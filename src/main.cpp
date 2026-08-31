@@ -8,14 +8,17 @@
 #include "power.h"
 
 void setup() {
+  //immedialty calls the power set up function to ensure the device keeps itself on (activites NPN transistor and PMOS)
   powerSetup();
+  //gets all of the controls/buttons set up
+  controlsSetup();
+
   Serial.begin(115200);
 
-  // if(!sd_card_setup())
-  // {
-  //   return;
-  // }
-  // controlsSetup();
+  //calls the sd card set up function
+  sd_card_setup();
+  
+  test("/music");
 }
 
 void loop() {
@@ -24,6 +27,5 @@ void loop() {
   // {
   //   Serial.println(getEncoderValue());
   // }
-  Serial.println(getBatteryVoltage());
 }
 
