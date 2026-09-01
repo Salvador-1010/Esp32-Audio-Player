@@ -44,6 +44,12 @@ int itemSpacingY = 25;
 //stores the current item the cursor should be pointing at
 int selectedItem = 0;
 
+//creates String vector to store the items of the current directory
+std::vector<String> songs;
+
+//var to store the length of the dynamically changed item highlight rect
+int maxItemHighlightWidth = 200;
+int currentItemHighlightWidth = 200;
 
 //sets up the tft screen
 void displaySetup()
@@ -70,7 +76,7 @@ void displaySetup()
     //creates the cursor sprite
     cursor.createSprite(20,20);
     //creates highlight sprite
-    highlight.createSprite(300,24);
+    highlight.createSprite(200,24);
 
     //draws the menu ui on start up to get the initial menu set up
 
@@ -78,14 +84,24 @@ void displaySetup()
 
 void updateDisplay(int direction)
 {
-    //changes the selected item to point to the correct new value
-    selectedItem += direction;
-
     //first clears the current sprite location
     cursor.fillSprite(TFT_BLACK);
     cursor.pushSprite(currentCursorX, currentCursorY);
 
-    tft.drawRect(itemHighlightX, currentCursorY-2, 300 ,24, TFT_BLACK);
+    tft.drawRect(itemHighlightX, currentCursorY-2, currentItemHighlightWidth ,24, TFT_BLACK);
+
+    //changes the selected item to point to the correct new value
+    selectedItem += direction;
+
+    //checks the length of the selected item and sets the rect width to match it or be a default of 200
+    if (tft.textWidth(songs[selectedItem]) >= 200)
+    {
+        currentItemHighlightWidth = maxItemHighlightWidth;
+    }
+    else
+    {
+        currentItemHighlightWidth = tft.textWidth(songs[selectedItem]) + 10; //adds a small pixel buffer
+    }
 
     //then changes the cursor y value to point to the new direction
     currentCursorY += (itemSpacingY * direction);
@@ -94,12 +110,17 @@ void updateDisplay(int direction)
     cursor.fillTriangle(0,2, 18, 10, 0, 18, TFT_WHITE);
     cursor.pushSprite(currentCursorX,currentCursorY);
 
-    highlight.drawRect(0, 0, 300, 24, TFT_WHITE);
+    highlight.fillSprite(TFT_BLACK);
+    highlight.drawRect(0, 0, currentItemHighlightWidth, 24, TFT_WHITE);
     highlight.pushSprite(itemHighlightX, currentCursorY-2, TFT_BLACK);
+
+    Serial.println(tft.textWidth(songs[selectedItem]));
 }
 
 void drawScreen(String title, const std::vector<String>& items)
 {
+    //stores the directory items in a global variable
+    songs = items;
     //draws the initial menu display
     tft.setCursor(titleX,titleY);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
@@ -109,12 +130,13 @@ void drawScreen(String title, const std::vector<String>& items)
 
     //sets different text size for the songs 
     tft.setTextSize(itemTextSize);
-    for (const String& item : items)
+    for (const String& song : songs)
     {
+
         //sets the cursor to the first item "slot"
         tft.setCursor(currentItemX, currentItemY);
         //prints the item name
-        tft.print(item);
+        tft.print(song);
         //then changes the itemY value for the next item name
         currentItemY += itemSpacingY; //adds 20 since that is the height of the song select cursor sprite
     }
@@ -134,13 +156,14 @@ void blinkCursor()
         cursor.fillSprite(TFT_BLACK);
         
         //since the rectangle sprite has trouble erasing itself without the filter to protect the text behind it i just decided to draw over it normaly
-        tft.drawRect(itemHighlightX, currentCursorY-2, 300 ,24, TFT_BLACK);
+        tft.drawRect(itemHighlightX, currentCursorY-2, currentItemHighlightWidth ,24, TFT_BLACK);
 
         //if the cursor is now on that means it was previously off when the function ran
         if (isCursorOn)
         {
             cursor.fillTriangle(0,2, 18, 10, 0, 18, TFT_WHITE);
-            highlight.drawRect(0,0,300 ,24,TFT_WHITE);
+            highlight.fillSprite(TFT_BLACK);
+            highlight.drawRect(0,0,currentItemHighlightWidth ,24,TFT_WHITE);
             highlight.pushSprite(itemHighlightX, currentCursorY-2, TFT_BLACK);
 
         }
