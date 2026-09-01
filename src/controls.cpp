@@ -19,6 +19,9 @@ volatile int transitionAccumulator = 0;
 //tracks the previous state combination of clk and DT
 static volatile uint8_t lastState = 0;
 
+//stores the direction that the encoder traveled in the last change (1 for down -1 for up)
+int encoderChangeDirection;
+
 //set up function that gets all the pins and functions ready
 void controlsSetup() {
     pinMode(rotary_clk, INPUT);
@@ -78,6 +81,7 @@ bool encoderValueChanged()
     //checks to see if the current pos is equal to the last known position and if not then the value has changed and it sets the new value
     if (encoderPos != lastEncoderPos)
     {
+        encoderChangeDirection = encoderPos - lastEncoderPos;
         lastEncoderPos = encoderPos;
         return true;
     }
@@ -85,8 +89,8 @@ bool encoderValueChanged()
     return false;
 }
 
-//helper function for other files to get the actual encoder value
-int getEncoderValue()
+//helper function for other files to get the direction the user scrolled depeneding on the actual encoder value
+int getEncoderChangeDirection()
 {
-    return encoderPos;
+    return encoderChangeDirection;
 }

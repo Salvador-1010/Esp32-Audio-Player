@@ -1,10 +1,12 @@
 #pragma once
 #include <Arduino.h>
+#include <vector>
 
 bool sd_card_setup();
 uint64_t get_free_bytes();
 void eject_sd();
-String getDirectoryName();
+String getCurrentDirectory();
 
 //function to navigate through directories
-void test(const char *path);
+//uses the standard library logic of vector and creates an resizable list of strings
+std::vector<String> getFiles(const char *directory);

@@ -3,4 +3,6 @@
 void IRAM_ATTR read_encoder_ISR();
 void controlsSetup();
 bool encoderValueChanged();
-int getEncoderValue();
+
+//returns either 1 for scrolling down or 0 for scrolling up
+int getEncoderChangeDirection();

@@ -20,18 +20,27 @@ void setup() {
   //calls the sd card set up function
   sd_card_setup();
   
-  test("/music");
+
   displaySetup();
-  updateDisplay();
+  //testing the get directory funciton
+  std::vector<String> songs = getFiles("/music");
+
+  String test = getCurrentDirectory();
+  
+  drawScreen(test, songs);
 }
 
 void loop() {
   powerUpdate();
+
+  //cursor always blinks no matter what
+  blinkCursor();
+
   if (encoderValueChanged())
   {
-    Serial.println(getEncoderValue());
+    //if the encoder value changed then were gonna update the display to change cursor and selected item
+    updateDisplay(getEncoderChangeDirection());
   }
-  drawDisplayMenu();
 }
 
 // void updateDisplay()

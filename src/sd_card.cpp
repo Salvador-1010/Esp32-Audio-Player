@@ -8,6 +8,8 @@ const int SD_MMC_CMD = 15;
 const int SD_MMC_CLK = 14;
 const int SD_MMC_D0 = 2;
 
+//the default first path is to the music folder
+String currentPath = "/music";
 
 bool sd_card_setup()
 {
@@ -64,7 +66,26 @@ void test(const char *path)
     }
 }
 
-String getDirectoryName()
+std::vector<String> getFiles(const char *directory)
 {
-  return "";
+    //declares the string vector to store all of the song names
+    std::vector<String> songs;
+    //tries to open the requested file directory
+    File file = SD_MMC.open(directory);
+    File entry = file.openNextFile();
+    //if entry is a proper file object then it will return 1
+    while(entry)
+    {
+      songs.push_back(entry.name());
+      entry.close();
+      entry = file.openNextFile();
+    }
+    return songs;
+}
+
+String getCurrentDirectory()
+{
+  currentPath.remove(0,1);
+  currentPath[0] = toupper(currentPath[0]);
+  return currentPath;
 }
