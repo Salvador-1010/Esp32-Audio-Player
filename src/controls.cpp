@@ -9,6 +9,9 @@ const int rotary_DT = 36;
 //but the push button pin needs to use the esp32 pull up resistors
 const int rotary_SW = 21;
 
+//defines push button pins
+const int button1 = 13;
+
 //defines as a volatile int because it may change outside of the normal program flow
 volatile int encoderPos = 0;
 int lastEncoderPos = 0;
@@ -21,6 +24,9 @@ static volatile uint8_t lastState = 0;
 
 //stores the direction that the encoder traveled in the last change (1 for down -1 for up)
 int encoderChangeDirection;
+
+//stores button1 value (true for pressed false for not pressed)
+bool button1Value = false;
 
 //set up function that gets all the pins and functions ready
 void controlsSetup() {
@@ -37,6 +43,9 @@ void controlsSetup() {
     //triggers interrupt when either pin changes value
     attachInterrupt(digitalPinToInterrupt(rotary_clk), read_encoder_ISR, CHANGE);
     attachInterrupt(digitalPinToInterrupt(rotary_DT), read_encoder_ISR, CHANGE);
+
+    //sets it to pulldown so it defaults to 0 when not pressed
+    pinMode(button1, INPUT_PULLDOWN);
 }
 
 
@@ -98,4 +107,10 @@ int getEncoderChangeDirection()
 bool encoderButtonPressed()
 {
     return digitalRead(rotary_SW);
+}
+
+bool readButton1()
+{
+    button1Value = digitalRead(button1);
+    return button1Value;
 }

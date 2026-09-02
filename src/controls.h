@@ -9,3 +9,5 @@ int getEncoderChangeDirection();
 
 //returns false when the button is pressed (due to the pull up resistor it defaults to high)
 bool encoderButtonPressed();
+
+bool readButton1();

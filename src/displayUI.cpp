@@ -50,7 +50,7 @@ int selectedItem = 0;
 int selectedRow = 0;
 
 //creates String vector to store the items of the current directory
-std::vector<String> songs;
+std::vector<String> items;
 
 //var to store the length of the dynamically changed item highlight rect
 int maxItemHighlightWidth = 200;
@@ -87,7 +87,7 @@ void displaySetup()
     cursor.createSprite(20,20);
     //creates highlight sprite
     highlight.createSprite(200,24);
-    itemText.createSprite(200,24);
+    itemText.createSprite(240,26);
 
     //draws the menu ui on start up to get the initial menu set up
 
@@ -95,18 +95,23 @@ void displaySetup()
 
 void updateDisplay(int direction)
 {
+    //if theres no items in the directory well then theres no need to update anytihng
+    if (items.size() == 0)
+    {
+        currentCursorY = initialCursorY;
+        return;
+    }
     //changes the selected item to point to the correct new value
     selectedItem += direction;
-    Serial.println(selectedItem);
     //checks to make sure that the desired scroll direction is even possible
     //if user tries to scroll too far up it will just wrap around to the bottom
     if (selectedItem < 0)
     {
         //sets selected item to the last song in the list 
-        selectedItem = songs.size() - 1;
+        selectedItem = items.size() - 1;
     }
     //if the user tries to scroll past the last song itll automatically wrap around to the top
-    else if (selectedItem >= songs.size())
+    else if (selectedItem >= items.size())
     {
         selectedItem = 0;
     }
@@ -120,30 +125,25 @@ void updateDisplay(int direction)
         selectedRow = 10;
     }
     firstVisibleItem = selectedItem - selectedRow;
-    Serial.println(selectedItem);
-    Serial.println(selectedRow);
 
     if (firstVisibleItem != previousFirstVisibleItem)
     {
-        Serial.println("drawing screen again");
-        drawScreen(currentScreen, songs);
+        drawScreen(currentScreen, items);
         previousFirstVisibleItem = firstVisibleItem;
     }
 
     //first clears the current sprite location
-    cursor.fillSprite(TFT_BLACK);
-    cursor.pushSprite(currentCursorX, currentCursorY);
+    resetCursor();
 
-    tft.drawRect(itemHighlightX, currentCursorY-2, currentItemHighlightWidth ,24, TFT_BLACK);
 
     //checks the length of the selected item and sets the rect width to match it or be a default of 200
-    if (tft.textWidth(songs[selectedItem]) >= 200)
+    if (tft.textWidth(items[selectedItem]) >= 200)
     {
         currentItemHighlightWidth = maxItemHighlightWidth;
     }
     else
     {
-        currentItemHighlightWidth = tft.textWidth(songs[selectedItem]) + 10; //adds a small pixel buffer
+        currentItemHighlightWidth = tft.textWidth(items[selectedItem]) + 10; //adds a small pixel buffer
     }
     
     //then changes the cursor y value to point to the new direction
@@ -161,13 +161,18 @@ void updateDisplay(int direction)
     highlight.pushSprite(itemHighlightX, currentCursorY-2, TFT_BLACK);
 }
 
-void drawScreen(String title, const std::vector<String>& items)
+void drawScreen(String title, const std::vector<String>& list)
 {
     //stores the directory items in a global variable
-    songs = items;
+    items = list;
     //and the directory name
     currentScreen = title; 
-    //draws the initial menu display
+
+    //makes sure that the previous title was fully cleared out
+    tft.setCursor(0,0);
+    tft.fillRect(0,0,240,35, TFT_BLACK);
+
+    //then draws the screen display
     tft.setCursor(titleX,titleY);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextSize(titleSize);
@@ -180,18 +185,27 @@ void drawScreen(String title, const std::vector<String>& items)
 
     for (int i = (selectedItem - selectedRow); i <= (selectedItem - selectedRow) + 10; i++)
     {   
+        //always clears the item slots for all 11 
         //fills the sprite to black to erease all the text underneath
         itemText.fillSprite(TFT_BLACK);
         //first sets the cursory value
         currentItemY = initialItemY + (itemSpacingY * (i - selectedItem + selectedRow)); 
-        //clears the item slot before writting the new item name
-        itemText.pushSprite(currentItemX, currentItemY);
+        //clears the item slot before writting the new item name (clears entire item slot so both name and cursor)
+        itemText.pushSprite(currentCursorX, currentItemY);
         //sets the cursor to the first item "slot"
         tft.setCursor(currentItemX, currentItemY);
-        //prints the item name
-        tft.print(songs[i]);
+
+        //only goes to print the song name if there are still songs to print
+        if (i < items.size())
+        {
+            //prints the item name
+            tft.print(items[i]);
+        }
+
     }
 
+    //resets the cursor to be at the default state
+    resetCursor();
 }
 
 void blinkCursor()
@@ -223,4 +237,31 @@ void blinkCursor()
         cursor.pushSprite(currentCursorX, currentCursorY);
     }
 
+}
+
+String getSelectedItemName()
+{
+    return items[selectedItem];
+}
+
+void resetCursor()
+{
+    cursor.fillSprite(TFT_BLACK);
+    cursor.pushSprite(currentCursorX, currentCursorY);
+
+    //also resets the item highlight box 
+    tft.drawRect(itemHighlightX, currentCursorY-2, currentItemHighlightWidth ,24, TFT_BLACK);
+
+    currentCursorY = initialCursorY;
+    //also resets the item highlight width
+    currentItemHighlightWidth = maxItemHighlightWidth;
+}
+
+void resetNavigationState()
+{
+    //resets the selected items and everything surrounding that
+    selectedItem = 0;
+    selectedRow = 0;
+    firstVisibleItem = 0;
+    previousFirstVisibleItem = 0;
 }
