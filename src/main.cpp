@@ -41,6 +41,7 @@ void loop() {
     //if the encoder value changed then were gonna update the display to change cursor and selected item
     updateDisplay(getEncoderChangeDirection());
   }
+
 }
 
 // void updateDisplay()

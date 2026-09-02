@@ -94,3 +94,8 @@ int getEncoderChangeDirection()
 {
     return encoderChangeDirection;
 }
+
+bool encoderButtonPressed()
+{
+    return digitalRead(rotary_SW);
+}
