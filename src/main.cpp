@@ -11,6 +11,8 @@
 #include "displayUI.h"
 //includes main files
 #include "main.h"
+//includes audio player functions
+#include "audioPlayer.h"
 
 //makes sure that button presses arent read many times over so create a debounce delay
 unsigned long buttonPressDelay = 500;
@@ -30,7 +32,6 @@ String formattedPath = currentPath;
 //stores the items in the current directory
 std::vector<String> itemsList;
 
-String test;
 
 void setup() {
   //immedialty calls the power set up function to ensure the device keeps itself on (activites NPN transistor and PMOS)
@@ -42,6 +43,9 @@ void setup() {
 
   //calls the sd card set up function
   sd_card_setup();
+
+  //sets up the i2s
+  setupI2S();
   
 
   displaySetup();
@@ -69,7 +73,23 @@ void loop() {
       encoderPressedAt = millis();
       //eventually it will check what mode the player is in but for now it can only be in navigate mode
 
-      enterDirectory();
+      //first forms the desired path from the current path and the next path to add on that was selected
+      currentPath = currentPath + "/" + getSelectedItemName();
+      formattedPath = formatCurrentPath(currentPath);
+      //then checks if the desired destination is a path or a folder
+      if (checkIfDirectory(currentPath.c_str()))
+      {
+        enterDirectory();
+      }
+      else
+      {
+        //now since we know it is a file we have to check if its a playable file (.wav, .mp3, or .flac)
+        if(isValidFile(getSelectedItemName()))
+        {
+          
+        }
+      }
+
     }
   }
   else if (millis() - encoderPressedAt > buttonPressDelay)
@@ -115,12 +135,20 @@ String formatCurrentPath(String path)
 
 void exitDirectory()
 {
+  //checks to see if the user is already in the farthest back dir, if so they cant go back so it just returns
+  if (currentPath == "/music")
+  {
+    return;
+  }
+
   int index = currentPath.lastIndexOf("/");
 
   //erases the farthest back in order to effectively go back in the directory
   currentPath.remove(index, currentPath.length()-1);
+
   //formats the path name to just the string
   formattedPath = formatCurrentPath(currentPath);
+
   //gets the new item list
   itemsList = getFiles(currentPath.c_str());
   //resets the navigating variables before switching
@@ -131,11 +159,9 @@ void exitDirectory()
 
 void enterDirectory()
 {
-    //first forms the desired path from the current path and the next path to add on that was selected
-    currentPath = currentPath + "/" + getSelectedItemName();
-    formattedPath = formatCurrentPath(currentPath);
     //gets the items inside that directory 
     itemsList = getFiles(currentPath.c_str());
     resetNavigationState();
     drawScreen(formattedPath, itemsList);
 }
+

@@ -11,4 +11,5 @@ String getCurrentRoot();
 //uses the standard library logic of vector and creates an resizable list of strings
 std::vector<String> getFiles(const char *directory);
 
-//function to respond to rotary click and open either the file or directory selected
+//function to check if the selected item is either a file or directory
+bool checkIfDirectory(const char* currentPath);

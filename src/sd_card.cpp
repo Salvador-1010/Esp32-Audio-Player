@@ -86,3 +86,10 @@ std::vector<String> getFiles(const char *directory)
 }
 
 
+bool checkIfDirectory(const char* currentPath)
+{
+  //first must convert the path to a file
+  File desiredFile = SD_MMC.open(currentPath);
+  //then returns whether that file is a directory (true) or a file (false)
+  return desiredFile.isDirectory();
+}
