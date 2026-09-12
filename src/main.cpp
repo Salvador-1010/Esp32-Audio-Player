@@ -28,9 +28,12 @@ unsigned long button1PressedAt;
 String currentPath = "/music";
 String additionalPath;
 String formattedPath = currentPath;
+//seperately stores the selected path in order to avoid changing the path when selecting a song
+String selectedPath;
 
 //stores the items in the current directory
 std::vector<String> itemsList;
+
 
 
 void setup() {
@@ -44,11 +47,16 @@ void setup() {
   //calls the sd card set up function
   sd_card_setup();
 
+  //sets up the display
+  displaySetup();
+
   //sets up the i2s
   setupI2S();
-  
 
-  displaySetup();
+  //starts the audio task on core 0
+  startAudioTask();
+
+  
   //testing the get directory funciton
   //converts string to char*
   itemsList = getFiles(currentPath.c_str());
@@ -73,23 +81,33 @@ void loop() {
       encoderPressedAt = millis();
       //eventually it will check what mode the player is in but for now it can only be in navigate mode
 
-      //first forms the desired path from the current path and the next path to add on that was selected
-      currentPath = currentPath + "/" + getSelectedItemName();
-      formattedPath = formatCurrentPath(currentPath);
+      //first forms the desired path in a seperate var to check if it is a directory or song
+      selectedPath = currentPath + "/" + getSelectedItemName();
       //then checks if the desired destination is a path or a folder
-      if (checkIfDirectory(currentPath.c_str()))
+      // Serial.println(currentPath);
+      // Serial.println(formattedPath);
+      if (checkIfDirectory(selectedPath.c_str()))
       {
+        //if its a directory then updates the current path
+        currentPath = selectedPath;
+        //then formats the new path that we are in 
+        formattedPath = formatCurrentPath(currentPath);
+
         enterDirectory();
       }
       else
       {
+        //if it is not a directory than the current path stays the same but the selected path still includes the song name
+
         //now since we know it is a file we have to check if its a playable file (.wav, .mp3, or .flac)
-        if(isValidFile(getSelectedItemName()))
+        if(isValidFile(currentPath, getSelectedItemName()))
         {
           
         }
       }
-
+      Serial.println(selectedPath);
+      // Serial.println(formattedPath);
+      // Serial.println(currentPath);
     }
   }
   else if (millis() - encoderPressedAt > buttonPressDelay)
@@ -121,7 +139,6 @@ void loop() {
     //if the encoder value changed then were gonna update the display to change cursor and selected item
     updateDisplay(getEncoderChangeDirection());
   }
-
 }
 
 String formatCurrentPath(String path)
