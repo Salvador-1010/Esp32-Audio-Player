@@ -11,7 +11,6 @@ void setupI2S();
 
 void testTone();
 
-//function to run all of the audio related tasks
-void audioTask(void *parameter);
 
-void startAudioTask();
+void audioSetup();
+void audioUpdate();

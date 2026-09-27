@@ -1,5 +1,6 @@
 #include "audioPlayer.h"
 #include <driver/i2s.h>
+#include <Audio.h>
 
 //list to store the valid music files
 String validFiles[] = {".wav", ".mp3", ".flac"};
@@ -15,36 +16,57 @@ float waveFreq = 440.0;
 float pi = PI;
 float phase = 0;
 
-void setupI2S()
+//I2S Pins
+const int I2S_BLCK = 32;
+const int I2S_LRC = 33;
+const int I2S_DOUT = 19; 
+
+//creates audio object for music playback
+Audio audio;
+
+void audioSetup()
 {
-  //configures the i2s struct with all of the needed information
-  i2s_config_t i2s_config = {
-    //configures the mode using a 2bit thing so that the esp32 is the master and transmits the data
-    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
-    .sample_rate = sampleRate,
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-    .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-    .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_STAND_I2S),
-    .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
-    .dma_buf_count = 8,
-    .dma_buf_len = 64,
-    .use_apll = false,
-    .tx_desc_auto_clear = true
-  };
+  audio.setPinout(I2S_BLCK, I2S_LRC, I2S_DOUT);
+  audio.setVolume(10);
+}
 
-  //configures the i2s pinout
-  i2s_pin_config_t pin_config = {
-    .mck_io_num = I2S_PIN_NO_CHANGE,
-    .bck_io_num = 32,
-    .ws_io_num = 33,
-    .data_out_num = 19,
-    .data_in_num = I2S_PIN_NO_CHANGE
-  };
+void audioUpdate()
+{
+  audio.loop();
+}
 
-  esp_err_t driverResult = i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
-  esp_err_t pinResult = i2s_set_pin(I2S_NUM_0, &pin_config);
 
-} 
+//no longer need thius code since the mp3 decoder library takes care of it for us
+// void setupI2S()
+// {
+//   //configures the i2s struct with all of the needed information
+//   i2s_config_t i2s_config = {
+//     //configures the mode using a 2bit thing so that the esp32 is the master and transmits the data
+//     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX),
+//     .sample_rate = sampleRate,
+//     .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+//     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+//     .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_STAND_I2S),
+//     .intr_alloc_flags = ESP_INTR_FLAG_LEVEL1,
+//     .dma_buf_count = 8,
+//     .dma_buf_len = 64,
+//     .use_apll = false,
+//     .tx_desc_auto_clear = true
+//   };
+
+//   //configures the i2s pinout
+//   i2s_pin_config_t pin_config = {
+//     .mck_io_num = I2S_PIN_NO_CHANGE,
+//     .bck_io_num = 32,
+//     .ws_io_num = 33,
+//     .data_out_num = 19,
+//     .data_in_num = I2S_PIN_NO_CHANGE
+//   };
+
+//   esp_err_t driverResult = i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
+//   esp_err_t pinResult = i2s_set_pin(I2S_NUM_0, &pin_config);
+
+// } 
 
 
 bool isValidFile(String newPath, String selectedSong)
@@ -64,7 +86,9 @@ bool isValidFile(String newPath, String selectedSong)
       currentExtension = extension;
       // Serial.println(currentSong);
       // Serial.println(currentExtension);
-      // Serial.println(path);
+      Serial.println(path);
+      bool connected = audio.connecttoFS(SD_MMC, path.c_str());
+      Serial.println(connected);
       return true;
     }
   }
@@ -104,32 +128,4 @@ void testTone()
 
 }
 
-void audioTask(void *parameter)
-{
-  //repeats the code infinitly 
-  for(;;)
-  {
-  testTone();
-  }
-}
 
-
-//new function definition in order to use the dual-core capabailites of the esp32
-
-//task handle
-TaskHandle_t audioTaskHandle = NULL; 
-
-void startAudioTask()
-{
-    BaseType_t taskresult = xTaskCreatePinnedToCore(
-  audioTask,
-  "Audio Task",
-  4096,
-  NULL,
-  2,
-  &audioTaskHandle,
-  0
-);
-
-  // Serial.println(taskresult == pdPASS);
-}

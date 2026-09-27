@@ -50,11 +50,10 @@ void setup() {
   //sets up the display
   displaySetup();
 
-  //sets up the i2s
-  setupI2S();
+  audioSetup();
 
-  //starts the audio task on core 0
-  startAudioTask();
+  // //sets up the i2s
+  // setupI2S();
 
   
   //testing the get directory funciton
@@ -66,6 +65,7 @@ void setup() {
 
 void loop() {
   powerUpdate();
+  audioUpdate();
 
   //cursor always blinks no matter what
   blinkCursor();
@@ -100,7 +100,7 @@ void loop() {
         //if it is not a directory than the current path stays the same but the selected path still includes the song name
 
         //now since we know it is a file we have to check if its a playable file (.wav, .mp3, or .flac)
-        if(isValidFile(currentPath, getSelectedItemName()))
+        if(isValidFile(selectedPath, getSelectedItemName()))
         {
           
         }
@@ -139,6 +139,7 @@ void loop() {
     //if the encoder value changed then were gonna update the display to change cursor and selected item
     updateDisplay(getEncoderChangeDirection());
   }
+
 }
 
 String formatCurrentPath(String path)
