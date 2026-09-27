@@ -10,4 +10,5 @@ void powerOff();
 //function to read the current battery voltage
 float getBatteryVoltage();
 
-
+//helper function to give the current mode state
+bool getModeChange();
