@@ -5,9 +5,10 @@
 //list to store the valid music files
 String validFiles[] = {".wav", ".mp3", ".flac"};
 
-//stores the current song that is being playd and its extension format
+//stores information about the current song being played
 String currentSong;
 String currentExtension;
+int currentidx;
 
 String path;
 
@@ -34,6 +35,51 @@ void audioUpdate()
 {
   audio.loop();
 }
+
+bool isValidFile(String newPath, String selectedSong)
+{
+  currentSong = selectedSong;
+  path = newPath;
+  //checks whether the selected item is a valid file
+  //gets the index of the last '.' to isolate the extension 
+  int extensionIdx = currentSong.lastIndexOf(".");
+  String extension = currentSong.substring(extensionIdx, currentSong.length());
+  for (const String& file : validFiles)
+  {
+    //goes through every file and checks if the extension equals any of them and sets fileCheck to true if yes
+    if (file == extension)
+    {
+      //it was found so we can just return true since obviously there cant be another file
+      currentExtension = extension;
+      // Serial.println(currentSong);
+      // Serial.println(currentExtension);
+      return true;
+    }
+  }
+  //if it gets to this point then the file obvi wasnt found
+  return false;
+}
+
+
+void startSong()
+{
+  Serial.println(path);
+  bool connected = audio.connecttoFS(SD_MMC, path.c_str());
+  Serial.println(connected);
+}
+
+void pauseToggle()
+{
+  audio.pauseResume();
+}
+
+void setVolume(int newVolume)
+{
+  audio.setVolume(newVolume);
+}
+
+
+
 
 
 //no longer need thius code since the mp3 decoder library takes care of it for us
@@ -69,63 +115,35 @@ void audioUpdate()
 // } 
 
 
-bool isValidFile(String newPath, String selectedSong)
-{
-  currentSong = selectedSong;
-  path = newPath;
-  //checks whether the selected item is a valid file
-  //gets the index of the last '.' to isolate the extension 
-  int extensionIdx = currentSong.lastIndexOf(".");
-  String extension = currentSong.substring(extensionIdx, currentSong.length());
-  for (const String& file : validFiles)
-  {
-    //goes through every file and checks if the extension equals any of them and sets fileCheck to true if yes
-    if (file == extension)
-    {
-      //it was found so we can just return true since obviously there cant be another file
-      currentExtension = extension;
-      // Serial.println(currentSong);
-      // Serial.println(currentExtension);
-      Serial.println(path);
-      bool connected = audio.connecttoFS(SD_MMC, path.c_str());
-      Serial.println(connected);
-      return true;
-    }
-  }
-  //if it gets to this point then the file obvi wasnt found
-  return false;
-}
+//not needed for now since we have the library doing all of the buffering for us 
+// void testTone()
+// {
+//   const int frames = 128;
 
-void testTone()
-{
-  const int frames = 128;
+//   //2 values per frame: left + right
+//   int16_t audiobuffer[frames *2];
 
-  //2 values per frame: left + right
-  int16_t audiobuffer[frames *2];
+//   float phaseIncrement = 2.0 * PI * waveFreq/sampleRate;
 
-  float phaseIncrement = 2.0 * PI * waveFreq/sampleRate;
+//   for (int i = 0; i < frames; i++)
+//   {
+//     int16_t sample =(int16_t)(5000*sin(phase));
 
-  for (int i = 0; i < frames; i++)
-  {
-    int16_t sample =(int16_t)(5000*sin(phase));
+//     phase += phaseIncrement;
 
-    phase += phaseIncrement;
+//     if (phase >= 2.0 * PI)
+//     {
+//       phase -= 2.0 * PI;
+//     }
 
-    if (phase >= 2.0 * PI)
-    {
-      phase -= 2.0 * PI;
-    }
+//     //interleaved stereo PCM
+//     audiobuffer[i*2] = sample;
+//     audiobuffer[i * 2 + 1] = sample;
+//   }
 
-    //interleaved stereo PCM
-    audiobuffer[i*2] = sample;
-    audiobuffer[i * 2 + 1] = sample;
-  }
+//   size_t bytesWritten;
 
-  size_t bytesWritten;
-
-  esp_err_t writeResult = i2s_write(I2S_NUM_0, audiobuffer, sizeof(audiobuffer), &bytesWritten, portMAX_DELAY);
+//   esp_err_t writeResult = i2s_write(I2S_NUM_0, audiobuffer, sizeof(audiobuffer), &bytesWritten, portMAX_DELAY);
 
 
-}
-
-
+// }

@@ -14,3 +14,8 @@ void testTone();
 
 void audioSetup();
 void audioUpdate();
+
+void startSong();
+void pauseToggle();
+
+void setVolume(int newVolume);
