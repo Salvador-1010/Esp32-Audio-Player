@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 //incldues sd fucntion file in order to read directory and files for display
-#include "SD.h"
+#include "FS.h"
 
 //sets up the tft object
 TFT_eSPI tft = TFT_eSPI();

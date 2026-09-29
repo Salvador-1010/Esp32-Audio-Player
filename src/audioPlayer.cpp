@@ -1,5 +1,4 @@
 #include "audioPlayer.h"
-#include <driver/i2s.h>
 #include <Audio.h>
 
 //list to store the valid music files

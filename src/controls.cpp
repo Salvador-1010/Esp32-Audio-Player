@@ -61,11 +61,11 @@ void IRAM_ATTR read_encoder_ISR()
     //since there are specific valid transition pairs we can use that for accepting increments
     if (statePair == 0b0010 || statePair == 0b1011 || statePair == 0b1101 || statePair == 0b0100)
     {
-        transitionAccumulator++;
+        transitionAccumulator = transitionAccumulator + 1;
     }
     else if (statePair == 0b0001 || statePair == 0b0111 || statePair == 0b1110 || statePair == 0b1000)
     {
-        transitionAccumulator--;
+        transitionAccumulator = transitionAccumulator - 1;
     }
 
     //runs code to increment encoderPos
@@ -74,12 +74,12 @@ void IRAM_ATTR read_encoder_ISR()
         //sets the transitionaccumlator back to 0 to continue tracking
         transitionAccumulator = 0;
         //updates the current value
-        encoderPos++;
+        encoderPos = encoderPos + 1;
     }
     else if (transitionAccumulator == -2)
     {
         transitionAccumulator = 0;
-        encoderPos--;
+        encoderPos = encoderPos - 1;
     }
 
     lastState = currentState;    
