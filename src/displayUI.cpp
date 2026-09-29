@@ -61,6 +61,12 @@ String currentScreen;
 int firstVisibleItem = 0;
 int previousFirstVisibleItem = 0;
 
+//var to keep track of the idx of the last '/' of the path root
+int endRootIdx;
+
+//stores all of the displayable names of the items without the root
+std::vector<String> displayableNames;
+
 //sets up the tft screen
 void displaySetup()
 {
@@ -165,6 +171,8 @@ void drawScreen(String title, const std::vector<String>& list)
 {
     //stores the directory items in a global variable
     items = list;
+    //also stores the list in the displayablke names
+    displayableNames = items;
     //and the directory name
     currentScreen = title; 
 
@@ -181,7 +189,31 @@ void drawScreen(String title, const std::vector<String>& list)
 
     //sets different text size for the songs 
     tft.setTextSize(itemTextSize);
- 
+
+    //okay so since i added the absolute path to all the items list for easier navigation but i DONT want those to be printed out, we must filter out the path
+    //first makes sure the list isnt empty
+    if (items.size() > 0)
+    {
+        //then since every item in that directoy has the same root path we can just get the idx from the first item
+        endRootIdx = items[0].lastIndexOf('/');
+        //if in the main folder (no root), then just set the endRootIdx to 0 to not take any substring
+        if (endRootIdx < 0)
+        {
+            //makes it -1 since well add 1 later
+            endRootIdx = -1;
+        }
+    }
+
+    
+    //goes through every item and changes its name
+    for (int i = 0; i < displayableNames.size(); i++)
+    {
+
+        //stores the displayablke version of the item names
+        displayableNames[i] = displayableNames[i].substring(endRootIdx + 1);
+        //Serial.println(displayableNames[i]);
+    }
+
 
     for (int i = (selectedItem - selectedRow); i <= (selectedItem - selectedRow) + 10; i++)
     {   
@@ -199,7 +231,7 @@ void drawScreen(String title, const std::vector<String>& list)
         if (i < items.size())
         {
             //prints the item name
-            tft.print(items[i]);
+            tft.print(displayableNames[i]);
         }
 
     }

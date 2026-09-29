@@ -67,7 +67,7 @@ void test(const char *path)
     }
 }
 
-std::vector<String> getFiles(const char *directory)
+std::vector<String> getFiles(const char *directory, String path)
 {
   // first clears all of the stirngs currently stores
   files.clear();
@@ -78,7 +78,7 @@ std::vector<String> getFiles(const char *directory)
   while(entry)
   {
     //adds all of the items in teh directory to the items list 
-    files.push_back(entry.name());
+    files.push_back(path + entry.name());
     entry.close();
     entry = file.openNextFile();
   }

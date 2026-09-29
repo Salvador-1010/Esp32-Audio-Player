@@ -18,8 +18,9 @@
 
 //makes sure that button presses arent read many times over so create a debounce delay
 unsigned long buttonPressDelay = 50;
-unsigned long encoderPressedAt;
-bool encoderPressed = false; 
+bool encoderButtonState;
+bool previousEncoderButtonState;
+unsigned long encoderLastPressedAt;
 
 //vars to keep track of button1 being pressed
 bool button1Pressed = false;
@@ -28,10 +29,11 @@ unsigned long button1PressedAt;
 //vars to keep track of the time since the last encoder value changed
 unsigned long encoderLastChangedAt;
 
+
 //stores the current path and the path we are trying to go to
 //seperates the current default path, path to be added to move into a new dir, and the formatted version of the path for spelling
 String currentPath = "/music";
-String additionalPath;
+String pathPrefix = currentPath + "/";
 String formattedPath = currentPath;
 //seperately stores the selected path in order to avoid changing the path when selecting a song
 String selectedPath;
@@ -53,6 +55,9 @@ Preferences preference;
 //stores the current volume of the player
 int savedVolume;
 int volume;
+
+//stores array of all the current song paths in the directory
+std::vector<String> songs;
 
 void setup() {
   //immedialty calls the power set up function to ensure the device keeps itself on (activites NPN transistor and PMOS)
@@ -80,18 +85,25 @@ void setup() {
   //then sets the volume
   setVolume(volume);
 
+  //initializes the button state for later button press detection
+  encoderButtonState = encoderButtonPressed();
+  previousEncoderButtonState = encoderButtonState;
+
   // //sets up the i2s
   // setupI2S();
 
   
   //testing the get directory funciton
   //converts string to char*
-  itemsList = getFiles(currentPath.c_str());
+  itemsList = getFiles(currentPath.c_str(), "/music/");
   formattedPath = formatCurrentPath(currentPath);
   drawScreen(formattedPath, itemsList);
 }
 
 void loop() {
+  //updates the encoder button state
+  bool currentReading = encoderButtonPressed();
+
   powerUpdate();
   audioUpdate();
 
@@ -111,58 +123,80 @@ void loop() {
     }
   }
 
-  //if the encoder button is pressed than it responds
-  //(checks for ! because it is default high due to pullup resistor)
-  if (!encoderButtonPressed())
+  //checks to see if the previous state does not equal the current state
+  if (previousEncoderButtonState != currentReading)
   {
-    //makes sure that button press function reaction is only called once
-    if (!encoderPressed)
-    {
-      encoderPressed = true;
-      encoderPressedAt = millis();
+    previousEncoderButtonState = currentReading;
+    //updates the debounce timer
+    encoderLastPressedAt = millis();
+  }
 
+  //if the encoder button is pressed than it responds
+
+  //checks to make sure its been stable long enough
+  if ((millis() - encoderLastPressedAt >= buttonPressDelay) && previousEncoderButtonState != encoderButtonState)
+  {
+    //update the current stable encoder button value
+    encoderButtonState = previousEncoderButtonState;
+    //if the new button state is now low, then it was a button press
+    if (encoderButtonState == LOW)
+    {
       //if the encoder is in browing mode then it will continue with the browsing logic 
       if (mode == BROWSING)
       {
         //first forms the desired path in a seperate var to check if it is a directory or song
-        selectedPath = currentPath + "/" + getSelectedItemName();
+        selectedPath = getSelectedItemName();
+        //Serial.println(selectedPath);
+
         //then checks if the desired destination is a path or a folder
         // Serial.println(currentPath);
         // Serial.println(formattedPath);
         if (checkIfDirectory(selectedPath.c_str()))
         {
+          //if it is a directory it updates the new path prefix 
+          pathPrefix = selectedPath + "/";
           //if its a directory then updates the current path
           currentPath = selectedPath;
           //then formats the new path that we are in 
           formattedPath = formatCurrentPath(currentPath);
 
           enterDirectory();
+          
+          //TEMP CODE then prints all the songs in the directory
+          // for (String item : itemsList)
+          //   {
+          //     Serial.println(item);
+          //   }
         }
         else
         {
           //if it is not a directory than the current path stays the same but the selected path still includes the song name
-
           //now since we know it is a file we have to check if its a playable file (.wav, .mp3, or .flac)
           if(isValidFile(selectedPath, getSelectedItemName()))
           {
             //if the file is valid then the path will be saved and we can play the song
             startSong();
+            
+
+            //TEMP CODE TO TEST KNOWING EVERY OTHER SONG IN DIRECTORY
+            //songs = getFiles(selectedPath.c_str());
+            // for (String item : itemsList)
+            // {
+            //   Serial.println(item);
+            // }
           }
         }
-        Serial.println(selectedPath);
       }
       //if not, then it is in audiocontrol mode so it continues with that logic
       else 
       {
+        //Serial.println("PAUSE TOGGLE");
         pauseToggle();
       }
-
+      
     }
   }
-  else if (millis() - encoderPressedAt > buttonPressDelay)
-  {
-    encoderPressed = false;
-  }
+  
 
   //logic that runs when button1 (back/something else button)
   if (readButton1())
@@ -201,6 +235,7 @@ void loop() {
       volume += getEncoderChangeDirection();
       //makes sure that the volume is not above 21 or below 0
       volume = constrain(volume, 0, 21);
+      //Serial.print(volume);
       //then updates the volume
       setVolume(volume);
     }
@@ -232,17 +267,20 @@ void exitDirectory()
   {
     return;
   }
+  //Serial.println(currentPath);
 
   int index = currentPath.lastIndexOf("/");
 
   //erases the farthest back in order to effectively go back in the directory
   currentPath.remove(index, currentPath.length()-1);
+  //Serial.println(currentPath);
+  pathPrefix = currentPath + "/";
 
   //formats the path name to just the string
   formattedPath = formatCurrentPath(currentPath);
 
   //gets the new item list
-  itemsList = getFiles(currentPath.c_str());
+  itemsList = getFiles(currentPath.c_str(), pathPrefix);
   //resets the navigating variables before switching
   resetNavigationState();
   //draws the new screen
@@ -252,7 +290,13 @@ void exitDirectory()
 void enterDirectory()
 {
     //gets the items inside that directory 
-    itemsList = getFiles(currentPath.c_str());
+    itemsList = getFiles(currentPath.c_str(), pathPrefix);
+    // for (String item : itemsList)
+    //   {
+    //     Serial.println(item);
+    //   }
+    // Serial.println(currentPath);
+    // Serial.println(pathPrefix);
     resetNavigationState();
     drawScreen(formattedPath, itemsList);
 }

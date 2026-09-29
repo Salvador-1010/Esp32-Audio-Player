@@ -28,7 +28,7 @@ Audio audio;
 void audioSetup()
 {
   audio.setPinout(I2S_BLCK, I2S_LRC, I2S_DOUT);
-  audio.setVolume(10);
+  
 }
 
 void audioUpdate()
@@ -63,9 +63,8 @@ bool isValidFile(String newPath, String selectedSong)
 
 void startSong()
 {
-  Serial.println(path);
   bool connected = audio.connecttoFS(SD_MMC, path.c_str());
-  Serial.println(connected);
+  //Serial.println(connected);
 }
 
 void pauseToggle()
@@ -77,6 +76,7 @@ void setVolume(int newVolume)
 {
   audio.setVolume(newVolume);
 }
+
 
 
 
