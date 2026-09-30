@@ -24,9 +24,69 @@ const int I2S_DOUT = 19;
 //creates audio object for music playback
 Audio audio;
 
+String currentSongTitle;
+String currentSongArtist;
+
+//bool to store whether a song is playing 
+bool didSongEnd = false;
+
+void audioInfo(Audio::msg_t message) 
+{
+    // first filters only the important meta data
+    if (message.e == Audio::evt_id3data) 
+    {
+      //resets the song title and artist
+      String metadata = message.msg;
+      //checks the extensions type first to do the proper parsing checks
+      if (currentExtension == ".flac")
+      {
+        //since strcasecmp returns 0 if they are the same then we check for "!" 
+        if (!strcasecmp("TITLE=", metadata.substring(0,6).c_str()))
+        {
+          //sets the current song title to the metadata so to not change the actual metadata
+          currentSongTitle = metadata.substring(6);
+          // Serial.println(currentSongTitle);
+        }
+        //then checks for the artist
+        if (!strcasecmp("ARTIST=", metadata.substring(0,7).c_str()))
+        {
+          currentSongArtist = metadata.substring(7);
+          // Serial.println(currentSongArtist);
+        }
+      }
+      else if (currentExtension == ".mp3") //then does the same for mp3 files
+      {
+        //since strcasecmp returns 0 if they are the same then we check for "!" 
+        if (!strcasecmp("TITLE: ", metadata.substring(0,7).c_str()))
+        {
+          //sets the current song title to the metadata so to not change the actual metadata
+          currentSongTitle = metadata.substring(7);
+          // Serial.println(currentSongTitle);
+        }
+        //then checks for the artist
+        if (!strcasecmp("ARTIST: ", metadata.substring(0,8).c_str()))
+        {
+          currentSongArtist = metadata.substring(8);
+          // Serial.println(currentSongArtist);
+        }
+      }
+    }
+
+    //checks to see when a song finsihed
+    if (message.e == Audio::evt_eof)
+    {
+      Serial.println("END");
+      didSongEnd = true;
+    }
+}
+
 void audioSetup()
 {
+  Audio::audio_info_callback = audioInfo; 
   audio.setPinout(I2S_BLCK, I2S_LRC, I2S_DOUT);
+
+  //sets the volume to range from 0 - 50
+  audio.setVolumeSteps(50);
   
 }
 
@@ -35,14 +95,24 @@ void audioUpdate()
   audio.loop();
 }
 
-bool isValidFile(String newPath, String selectedSong)
+
+void startSong(String songPath)
 {
-  currentSong = selectedSong;
-  path = newPath;
+  path = songPath;
+  String songName = path;
+
   //checks whether the selected item is a valid file
   //gets the index of the last '.' to isolate the extension 
-  int extensionIdx = currentSong.lastIndexOf(".");
-  String extension = currentSong.substring(extensionIdx, currentSong.length());
+  int extensionIdx = path.lastIndexOf(".");
+  String extension = path.substring(extensionIdx, path.length());
+
+  //removes the prefixing path
+  songName.remove(0,songName.lastIndexOf('/') + 1);
+  //removes the end extension
+  currentSong = songName.substring(0, extensionIdx);
+
+  //sets the bool to false by default
+  bool isValid = false;
   for (const String& file : validFiles)
   {
     //goes through every file and checks if the extension equals any of them and sets fileCheck to true if yes
@@ -51,19 +121,29 @@ bool isValidFile(String newPath, String selectedSong)
       //it was found so we can just return true since obviously there cant be another file
       currentExtension = extension;
       // Serial.println(currentSong);
-      // Serial.println(currentExtension);
-      return true;
+      //Serial.println(currentExtension);
+      isValid = true;
     }
   }
-  //if it gets to this point then the file obvi wasnt found
-  return false;
-}
 
+  //if none of the files were valid then return
+  if (!isValid)
+  {
+    return;
+  }
+  
+  //sets the current song to the playback file for default
+  currentSongTitle = currentSong;
+  //resets the current artist 
+  currentSongArtist = "";
 
-void startSong()
-{
+  // Serial.println(currentSong);
+  // Serial.println(path);
   bool connected = audio.connecttoFS(SD_MMC, path.c_str());
-  //Serial.println(connected);
+
+
+  // Serial.println(connected);
+  // Serial.println(currentSongTitle);
 }
 
 void pauseToggle()
@@ -76,7 +156,20 @@ void setVolume(int newVolume)
   audio.setVolume(newVolume);
 }
 
+void getBufferStatus()
+{
+  audio.inBufferStatus();
+}
 
+
+bool songEnded()
+{
+  //gets the current song state
+  bool songState = didSongEnd;
+  //sets the state back to playing since we automatically play a new song 
+  didSongEnd = false;
+  return didSongEnd;
+}
 
 
 

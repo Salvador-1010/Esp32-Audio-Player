@@ -56,8 +56,6 @@ Preferences preference;
 int savedVolume;
 int volume;
 
-//stores array of all the current song paths in the directory
-std::vector<String> songs;
 
 void setup() {
   //immedialty calls the power set up function to ensure the device keeps itself on (activites NPN transistor and PMOS)
@@ -100,7 +98,8 @@ void setup() {
   drawScreen(formattedPath, itemsList);
 }
 
-void loop() {
+void loop() 
+{
   //updates the encoder button state
   bool currentReading = encoderButtonPressed();
 
@@ -170,22 +169,14 @@ void loop() {
         }
         else
         {
-          //if it is not a directory than the current path stays the same but the selected path still includes the song name
-          //now since we know it is a file we have to check if its a playable file (.wav, .mp3, or .flac)
-          if(isValidFile(selectedPath, getSelectedItemName()))
-          {
-            //if the file is valid then the path will be saved and we can play the song
-            startSong();
-            
-
-            //TEMP CODE TO TEST KNOWING EVERY OTHER SONG IN DIRECTORY
-            //songs = getFiles(selectedPath.c_str());
-            // for (String item : itemsList)
-            // {
-            //   Serial.println(item);
-            // }
-          }
+          // Serial.println(selectedPath);
+          startSong(selectedPath);
+          // for (String item : itemsList)
+          //   {
+          //     Serial.println(item);
+          //   }
         }
+      
       }
       //if not, then it is in audiocontrol mode so it continues with that logic
       else 
@@ -194,8 +185,8 @@ void loop() {
         pauseToggle();
       }
       
-    }
   }
+}
   
 
   //logic that runs when button1 (back/something else button)
@@ -229,15 +220,7 @@ void loop() {
     //else, its in audio control mode so it changes the volume
     else
     {
-      //sets the last time it was changed to the current time
-      encoderLastChangedAt = millis();
-      //here will be the logic to change the volume 
-      volume += getEncoderChangeDirection();
-      //makes sure that the volume is not above 21 or below 0
-      volume = constrain(volume, 0, 21);
-      //Serial.print(volume);
-      //then updates the volume
-      setVolume(volume);
+      adjustVolume();
     }
   }
   //if the last volume != current volume AND the encoder hasnt been changed in 500ms, write to flash
@@ -247,6 +230,12 @@ void loop() {
     preference.putInt("volume", volume);
     //then saves that as the lastest NVS volume value 
     savedVolume = volume;
+  }
+
+  //looping code to see if the song ended
+  if (songEnded())
+  {
+    playNextSong();
   }
   
 }
@@ -301,3 +290,24 @@ void enterDirectory()
     drawScreen(formattedPath, itemsList);
 }
 
+void adjustVolume()
+{
+  //sets the last time it was changed to the current time
+  encoderLastChangedAt = millis();
+  //here will be the logic to change the volume 
+  volume += getEncoderChangeDirection();
+  //makes sure that the volume is not above 21 or below 0
+  volume = constrain(volume, 0, 50);
+  //Serial.print(volume);
+  //then updates the volume
+  setVolume(volume);
+}
+
+void playNextSong()
+{
+  for (String item : itemsList)
+  {
+    Serial.println(item);
+  }
+  //first increment the current song were at i think 
+}
