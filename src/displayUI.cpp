@@ -276,6 +276,11 @@ String getSelectedItemName()
     return items[selectedItem];
 }
 
+int getSelectedItemIdx()
+{
+    return selectedItem;
+}
+
 void resetCursor()
 {
     cursor.fillSprite(TFT_BLACK);

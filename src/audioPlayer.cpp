@@ -75,7 +75,7 @@ void audioInfo(Audio::msg_t message)
     //checks to see when a song finsihed
     if (message.e == Audio::evt_eof)
     {
-      Serial.println("END");
+      //Serial.println("END");
       didSongEnd = true;
     }
 }
@@ -103,13 +103,15 @@ void startSong(String songPath)
 
   //checks whether the selected item is a valid file
   //gets the index of the last '.' to isolate the extension 
-  int extensionIdx = path.lastIndexOf(".");
-  String extension = path.substring(extensionIdx, path.length());
+  int extensionIdx = songName.lastIndexOf(".");
+  String extension = songName.substring(extensionIdx, songName.length());
 
-  //removes the prefixing path
-  songName.remove(0,songName.lastIndexOf('/') + 1);
   //removes the end extension
   currentSong = songName.substring(0, extensionIdx);
+
+  //removes the prefixing path
+  currentSong.remove(0,songName.lastIndexOf('/') + 1);
+
 
   //sets the bool to false by default
   bool isValid = false;
@@ -168,7 +170,13 @@ bool songEnded()
   bool songState = didSongEnd;
   //sets the state back to playing since we automatically play a new song 
   didSongEnd = false;
-  return didSongEnd;
+  //returns the saved song state before resetting
+  return songState;
+}
+
+unsigned int getCurrentTime()
+{
+  return audio.getAudioCurrentTime();
 }
 
 

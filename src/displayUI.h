@@ -12,6 +12,7 @@ void blinkCursor();
 
 //function that gives the name of current selected item 
 String getSelectedItemName();
+int getSelectedItemIdx();
 
 //resets the cursor to the inital starting position and also clears the old cursor 
 void resetCursor();

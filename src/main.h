@@ -15,3 +15,4 @@ void enterDirectory();
 void adjustVolume();
 
 void playNextSong();
+void previousSong();

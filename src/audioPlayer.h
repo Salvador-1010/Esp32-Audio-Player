@@ -22,3 +22,5 @@ void getBufferStatus();
 
 //helper function that returns whether the song has ended (determined via evt_eof)
 bool songEnded();
+
+unsigned int getCurrentTime();

@@ -22,9 +22,6 @@ bool encoderButtonState;
 bool previousEncoderButtonState;
 unsigned long encoderLastPressedAt;
 
-//vars to keep track of button1 being pressed
-bool button1Pressed = false;
-unsigned long button1PressedAt;
 
 //vars to keep track of the time since the last encoder value changed
 unsigned long encoderLastChangedAt;
@@ -41,6 +38,12 @@ String selectedPath;
 //stores the items in the current directory
 std::vector<String> itemsList;
 
+//stores the idx in the item list of the current song
+int songidx = 0;
+
+//determines whether we have toggled shuffle on or off
+bool shuffleToggled = false;
+
 //enum to store the current mode state
 enum playerMode {
   BROWSING,
@@ -55,6 +58,13 @@ Preferences preference;
 //stores the current volume of the player
 int savedVolume;
 int volume;
+
+//creates a playlist to store the current songs being listened to 
+std::vector<String> activePlaylist;
+String activeSongPath;
+int activePlaylistSize = 0;
+
+unsigned int currentSongTime = 0;
 
 
 void setup() {
@@ -105,6 +115,7 @@ void loop()
 
   powerUpdate();
   audioUpdate();
+  controlsUpdate();
 
   //cursor always blinks no matter what
   blinkCursor();
@@ -169,12 +180,23 @@ void loop()
         }
         else
         {
+          activeSongPath = selectedPath;
+          //updates the current active playlist 
+          activePlaylist = itemsList;
           // Serial.println(selectedPath);
-          startSong(selectedPath);
+          startSong(activeSongPath);
+          //updates the playlist we are "in" when a song is played (similar to spotify) so simply browsing another playlist one change the songs being shuffled
+          activePlaylistSize = activePlaylist.size();
+          //sets the songidx to that of the new song
+          songidx = getSelectedItemIdx();
+          // songidx = 0;
           // for (String item : itemsList)
           //   {
+          //     Serial.printf("idx %i: ", songidx);
+          //     songidx++;
           //     Serial.println(item);
           //   }
+          // Serial.println(getSelectedItemIdx());
         }
       
       }
@@ -189,25 +211,41 @@ void loop()
 }
   
 
-  //logic that runs when button1 (back/something else button)
-  if (readButton1())
+  //stores the value of the button function call to avoid calling it again
+  buttonEvent button1Value = readButton1();
+  //checks what button 1 needs us to do
+  if (button1Value != NO_CLICK) // no click = 4 so if it is not 4 then we got a click
   {
-    //returns true for when it is pressed
-    if (!button1Pressed)
+    //then checks the mode we are in
+    if (mode == BROWSING)
     {
-      button1Pressed = true;
-      button1PressedAt = millis();
-
-      //will eventually add logic to check what mode the player is in
-
-      exitDirectory();
+      //if we are in browsing mode then we handle accordingly
+      if (button1Value == SINGLE_CLICK) // single click = 0 so we just exit directoryu
+      {
+        exitDirectory();
+      }
+      else if (button1Value == DOUBLE_CLICK)
+      {
+        //may add double click functionality later on
+      }
     }
-    else if (millis() - button1PressedAt > buttonPressDelay)
+    else if (mode == AUDIO_CONTROL)
     {
-      button1Pressed = false;
+      if (button1Value == SINGLE_CLICK)
+      {
+        //here is where well skip the song
+        //Serial.println("skip song");
+        playNextSong();
+      }
+      else if (button1Value == DOUBLE_CLICK)
+      {
+        //here is where well rewind the song
+        //Serial.println("rewind song");
+        previousSong();
+      }
     }
   }
-  
+
   //if the encoder scrolls then it adjust for that
   if (encoderValueChanged())
   {
@@ -305,9 +343,73 @@ void adjustVolume()
 
 void playNextSong()
 {
-  for (String item : itemsList)
+  //nothing to do if a song hasnt been played yet
+  if (activePlaylistSize == 0)
   {
-    Serial.println(item);
+    return;
   }
+  //first check to see if shuffle is toggled on or off
+  if (shuffleToggled)
+  {
+    //here well implement the code to get a random song idx
+  }
+  else //if its false then we just play the next song directly
+  {
+    //increment the song idx
+    songidx++;
+
+    // Serial.println(playlistSize);
+    // Serial.println(songidx);
+    //if the song index is too high then wraps around to the beginning
+    if (songidx >= activePlaylistSize)
+    {
+      songidx = 0;
+    }
+  }
+
+  // Serial.println(songidx);
+  //gets the song path at that new index
+  activeSongPath = activePlaylist[songidx];
+  startSong(activeSongPath);
+
+
+  // for (String item : itemsList)
+  // {
+  //   Serial.println(item);
+  // }
   //first increment the current song were at i think 
+}
+
+void previousSong()
+{
+  //nothing to do if a song hasnt been played yet
+  if (activePlaylistSize == 0)
+  {
+    return;
+  }
+
+  currentSongTime = getCurrentTime();
+
+  //if the song time is less than 2 seconds then it plays the previous track
+  if (currentSongTime <= 2)
+  {
+    if (shuffleToggled)
+    {
+      //functionality if the shuffle is turned on
+    }
+    else
+    {
+      //sets the song idx to the previous song
+      songidx--;
+      //makes sure the idx doesnt go below 0
+      if (songidx < 0)
+      {
+        songidx = activePlaylistSize - 1;
+      }
+    }
+
+    //then sets the active song path 
+    activeSongPath = activePlaylist[songidx];
+  }
+  startSong(activeSongPath);
 }

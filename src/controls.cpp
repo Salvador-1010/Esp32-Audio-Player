@@ -1,6 +1,7 @@
 #include <Arduino.h>
 
 #include "controls.h"
+#include "Button2.h"
 
 //defining the rotary encoder pins
 const int rotary_clk = 39;
@@ -9,8 +10,6 @@ const int rotary_DT = 36;
 //but the push button pin needs to use the esp32 pull up resistors
 const int rotary_SW = 21;
 
-//defines push button pins
-const int button1 = 13;
 
 //defines as a volatile int because it may change outside of the normal program flow
 volatile int encoderPos = 0;
@@ -27,6 +26,16 @@ int encoderChangeDirection;
 
 //stores button1 value (true for pressed false for not pressed)
 bool button1Value = false;
+
+// //vars to keep track of button1 being pressed
+// bool button1Pressed = false;
+// unsigned long button1PressedAt;
+// int buttonPressDelay = 50;
+
+const int button1Pin = 13;
+Button2 button1;
+buttonEvent button1State;
+
 
 //set up function that gets all the pins and functions ready
 void controlsSetup() {
@@ -45,9 +54,16 @@ void controlsSetup() {
     attachInterrupt(digitalPinToInterrupt(rotary_DT), read_encoder_ISR, CHANGE);
 
     //sets it to pulldown so it defaults to 0 when not pressed
-    pinMode(button1, INPUT_PULLDOWN);
+    pinMode(button1Pin, INPUT_PULLDOWN);
+
+    //setup functionality for back/next/previous track button
+    button1.begin(button1Pin, INPUT_PULLDOWN, false);
 }
 
+void controlsUpdate()
+{
+    button1.loop();
+}
 
 void IRAM_ATTR read_encoder_ISR() 
 {
@@ -109,8 +125,30 @@ bool encoderButtonPressed()
     return digitalRead(rotary_SW);
 }
 
-bool readButton1()
+buttonEvent readButton1()
 {
-    button1Value = digitalRead(button1);
-    return button1Value;
+
+    if (button1.wasPressed())
+    {
+        clickType click = button1.read();
+        //sets the button1state to the click
+        if (click == single_click)
+        {
+            button1State = SINGLE_CLICK;
+        }
+        else if (click == double_click)
+        {
+            button1State = DOUBLE_CLICK;
+        }
+        else //if its something like triple or long click for now just default to no click
+        {
+            button1State = NO_CLICK;
+        }
+    }
+    else
+    {
+        //by default button1State is no click
+        button1State = NO_CLICK;
+    }
+    return button1State;
 }
