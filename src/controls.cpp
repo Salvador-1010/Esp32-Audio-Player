@@ -27,14 +27,12 @@ int encoderChangeDirection;
 //stores button1 value (true for pressed false for not pressed)
 bool button1Value = false;
 
-// //vars to keep track of button1 being pressed
-// bool button1Pressed = false;
-// unsigned long button1PressedAt;
-// int buttonPressDelay = 50;
-
 const int button1Pin = 13;
 Button2 button1;
 buttonEvent button1State;
+
+Button2 rotaryBtn; 
+buttonEvent rotaryBtnState;
 
 
 //set up function that gets all the pins and functions ready
@@ -58,11 +56,15 @@ void controlsSetup() {
 
     //setup functionality for back/next/previous track button
     button1.begin(button1Pin, INPUT_PULLDOWN, false);
+
+    //set up for the rotary button using
+    rotaryBtn.begin(rotary_SW); //uses default INPUT_PULLUP and active low = true
 }
 
 void controlsUpdate()
 {
     button1.loop();
+    rotaryBtn.loop();
 }
 
 void IRAM_ATTR read_encoder_ISR() 
@@ -120,9 +122,27 @@ int getEncoderChangeDirection()
     return encoderChangeDirection;
 }
 
-bool encoderButtonPressed()
+//switched from manualy rotary button handling to using button2 library
+// bool encoderButtonPressed()
+// {
+//     return digitalRead(rotary_SW);
+// }
+
+buttonEvent readRotaryBtn()
 {
-    return digitalRead(rotary_SW);
+    if (rotaryBtn.wasPressed())
+    {
+        clickType click = rotaryBtn.read();
+        if (click == single_click)
+        {
+            rotaryBtnState = SINGLE_CLICK;
+        }
+    }
+    else
+    {
+        rotaryBtnState = NO_CLICK;
+    }
+    return rotaryBtnState;
 }
 
 buttonEvent readButton1()
@@ -136,13 +156,26 @@ buttonEvent readButton1()
         {
             button1State = SINGLE_CLICK;
         }
+        else if (click == long_click)
+        {
+            button1State = LONG_CLICK;
+            //a single long click in browsing mode then we +15 secs
+        }
         else if (click == double_click)
         {
-            button1State = DOUBLE_CLICK;
+            //if its a double click then i have to check to see how long it was held for 
+            if (button1.wasPressedFor() >= 500)
+            {
+                button1State = DOUBLE_LONG_CLICK;
+            }
+            else
+            {
+                button1State = DOUBLE_CLICK;
+            }
         }
-        else //if its something like triple or long click for now just default to no click
+        else if (click == triple_click)
         {
-            button1State = NO_CLICK;
+            button1State = TRIPLE_CLICK;
         }
     }
     else

@@ -24,3 +24,6 @@ void getBufferStatus();
 bool songEnded();
 
 unsigned int getCurrentTime();
+
+//helper function to give main +-15 sec seeking capabilities
+void positionSeek(int seconds);

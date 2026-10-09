@@ -179,7 +179,10 @@ unsigned int getCurrentTime()
   return audio.getAudioCurrentTime();
 }
 
-
+void positionSeek(int seconds)
+{
+  audio.setTimeOffset(seconds);
+}
 
 
 //no longer need thius code since the mp3 decoder library takes care of it for us

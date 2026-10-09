@@ -18,9 +18,9 @@
 
 //makes sure that button presses arent read many times over so create a debounce delay
 unsigned long buttonPressDelay = 50;
-bool encoderButtonState;
-bool previousEncoderButtonState;
-unsigned long encoderLastPressedAt;
+// bool encoderButtonState;
+// bool previousEncoderButtonState;
+// unsigned long encoderLastPressedAt;
 
 
 //vars to keep track of the time since the last encoder value changed
@@ -93,10 +93,6 @@ void setup() {
   //then sets the volume
   setVolume(volume);
 
-  //initializes the button state for later button press detection
-  encoderButtonState = encoderButtonPressed();
-  previousEncoderButtonState = encoderButtonState;
-
   // //sets up the i2s
   // setupI2S();
 
@@ -110,8 +106,6 @@ void setup() {
 
 void loop() 
 {
-  //updates the encoder button state
-  bool currentReading = encoderButtonPressed();
 
   powerUpdate();
   audioUpdate();
@@ -133,116 +127,131 @@ void loop()
     }
   }
 
-  //checks to see if the previous state does not equal the current state
-  if (previousEncoderButtonState != currentReading)
-  {
-    previousEncoderButtonState = currentReading;
-    //updates the debounce timer
-    encoderLastPressedAt = millis();
-  }
+  //stores the value of the button function call to avoid calling it again
+  buttonEvent button1Value = readButton1();
+
+  //updates the encoder button state
+  // bool currentReading = encoderButtonPressed();
+  buttonEvent rotaryBtnValue = readRotaryBtn();
+
+  //switch from manually rotary button handling to using button2 library
+  // //checks to see if the previous state does not equal the current state
+  // if (previousEncoderButtonState != currentReading)
+  // {
+  //   previousEncoderButtonState = currentReading;
+  //   //updates the debounce timer
+  //   encoderLastPressedAt = millis();
+  // }
 
   //if the encoder button is pressed than it responds
 
-  //checks to make sure its been stable long enough
-  if ((millis() - encoderLastPressedAt >= buttonPressDelay) && previousEncoderButtonState != encoderButtonState)
+  //no longer need manually button debounce checking
+  // //checks to make sure its been stable long enough
+  // if ((millis() - encoderLastPressedAt >= buttonPressDelay) && previousEncoderButtonState != encoderButtonState)
+  // {
+  //   //update the current stable encoder button value
+  //   encoderButtonState = previousEncoderButtonState;
+  //   //if the new button state is now low, then it was a button press
+  //   if (encoderButtonState == LOW)
+  //   {
+
+  if (rotaryBtnValue != NO_CLICK)
   {
-    //update the current stable encoder button value
-    encoderButtonState = previousEncoderButtonState;
-    //if the new button state is now low, then it was a button press
-    if (encoderButtonState == LOW)
+    //if the encoder is in browing mode then it will continue with the browsing logic 
+    if (mode == BROWSING)
     {
-      //if the encoder is in browing mode then it will continue with the browsing logic 
-      if (mode == BROWSING)
-      {
-        //first forms the desired path in a seperate var to check if it is a directory or song
-        selectedPath = getSelectedItemName();
-        //Serial.println(selectedPath);
+      //first forms the desired path in a seperate var to check if it is a directory or song
+      selectedPath = getSelectedItemName();
+      //Serial.println(selectedPath);
 
-        //then checks if the desired destination is a path or a folder
-        // Serial.println(currentPath);
-        // Serial.println(formattedPath);
-        if (checkIfDirectory(selectedPath.c_str()))
-        {
-          //if it is a directory it updates the new path prefix 
-          pathPrefix = selectedPath + "/";
-          //if its a directory then updates the current path
-          currentPath = selectedPath;
-          //then formats the new path that we are in 
-          formattedPath = formatCurrentPath(currentPath);
-
-          enterDirectory();
-          
-          //TEMP CODE then prints all the songs in the directory
-          // for (String item : itemsList)
-          //   {
-          //     Serial.println(item);
-          //   }
-        }
-        else
-        {
-          activeSongPath = selectedPath;
-          //updates the current active playlist 
-          activePlaylist = itemsList;
-          // Serial.println(selectedPath);
-          startSong(activeSongPath);
-          //updates the playlist we are "in" when a song is played (similar to spotify) so simply browsing another playlist one change the songs being shuffled
-          activePlaylistSize = activePlaylist.size();
-          //sets the songidx to that of the new song
-          songidx = getSelectedItemIdx();
-          // songidx = 0;
-          // for (String item : itemsList)
-          //   {
-          //     Serial.printf("idx %i: ", songidx);
-          //     songidx++;
-          //     Serial.println(item);
-          //   }
-          // Serial.println(getSelectedItemIdx());
-        }
-      
-      }
-      //if not, then it is in audiocontrol mode so it continues with that logic
-      else 
+      //then checks if the desired destination is a path or a folder
+      // Serial.println(currentPath);
+      // Serial.println(formattedPath);
+      if (checkIfDirectory(selectedPath.c_str()))
       {
-        //Serial.println("PAUSE TOGGLE");
-        pauseToggle();
+        //if it is a directory it updates the new path prefix 
+        pathPrefix = selectedPath + "/";
+        //if its a directory then updates the current path
+        currentPath = selectedPath;
+        //then formats the new path that we are in 
+        formattedPath = formatCurrentPath(currentPath);
+
+        enterDirectory();
+        
+        //TEMP CODE then prints all the songs in the directory
+        // for (String item : itemsList)
+        //   {
+        //     Serial.println(item);
+        //   }
       }
-      
-  }
-}
+      else
+      {
+        activeSongPath = selectedPath;
+        //updates the current active playlist 
+        activePlaylist = itemsList;
+        // Serial.println(selectedPath);
+        startSong(activeSongPath);
+        //updates the playlist we are "in" when a song is played (similar to spotify) so simply browsing another playlist one change the songs being shuffled
+        activePlaylistSize = activePlaylist.size();
+        //sets the songidx to that of the new song
+        songidx = getSelectedItemIdx();
+        // songidx = 0;
+        // for (String item : itemsList)
+        //   {
+        //     Serial.printf("idx %i: ", songidx);
+        //     songidx++;
+        //     Serial.println(item);
+        //   }
+        // Serial.println(getSelectedItemIdx());
+      }
+    
+    }
+    //if not, then it is in audiocontrol mode so it continues with that logic
+    else 
+    {
+      //Serial.println("PAUSE TOGGLE");
+      pauseToggle();
+    }
+  }   
   
 
-  //stores the value of the button function call to avoid calling it again
-  buttonEvent button1Value = readButton1();
   //checks what button 1 needs us to do
   if (button1Value != NO_CLICK) // no click = 4 so if it is not 4 then we got a click
   {
     //then checks the mode we are in
     if (mode == BROWSING)
     {
-      //if we are in browsing mode then we handle accordingly
-      if (button1Value == SINGLE_CLICK) // single click = 0 so we just exit directoryu
+      switch(button1Value)
       {
-        exitDirectory();
-      }
-      else if (button1Value == DOUBLE_CLICK)
-      {
-        //may add double click functionality later on
+        case SINGLE_CLICK:
+          exitDirectory();
+          break;
+        case DOUBLE_CLICK:
+          break; //may later add functionality for double click in browsing mopde
       }
     }
     else if (mode == AUDIO_CONTROL)
     {
-      if (button1Value == SINGLE_CLICK)
+      switch(button1Value)
       {
-        //here is where well skip the song
-        //Serial.println("skip song");
-        playNextSong();
+        case SINGLE_CLICK:
+          playNextSong();
+          break;
+        case DOUBLE_CLICK:
+          previousSong();
+          break;
+        case LONG_CLICK:
+          positionSeek(15); //skips ahead by 15 seconds
+          break;
+        case DOUBLE_LONG_CLICK:
+          positionSeek(-15); //rewins by 15 seocnds
+          break;
+        case TRIPLE_CLICK:
+          shuffleToggled = !shuffleToggled;
+          Serial.println(shuffleToggled);
+          break;
       }
-      else if (button1Value == DOUBLE_CLICK)
-      {
-        //here is where well rewind the song
-        //Serial.println("rewind song");
-        previousSong();
-      }
+      
     }
   }
 
@@ -351,7 +360,7 @@ void playNextSong()
   //first check to see if shuffle is toggled on or off
   if (shuffleToggled)
   {
-    //here well implement the code to get a random song idx
+    songidx = random(activePlaylistSize);
   }
   else //if its false then we just play the next song directly
   {
@@ -367,10 +376,12 @@ void playNextSong()
     }
   }
 
-  // Serial.println(songidx);
+  Serial.println(songidx);
   //gets the song path at that new index
   activeSongPath = activePlaylist[songidx];
   startSong(activeSongPath);
+  Serial.println(activePlaylistSize);
+  Serial.println(activeSongPath);
 
 
   // for (String item : itemsList)
